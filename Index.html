@@ -1,0 +1,1136 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mic Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: phone-first field desk. Four tabs (Desk, Questions, Log, Plan) under a sticky wordmark;
+   the live interview runs as a full-screen "on air" layer with a red tally edge, timecode up top,
+   cue card in the middle, marker buttons and next/skip pinned at the thumb. */
+:root{
+  --bg:#E7EAEE; --surface:#FFFFFF; --surface-2:#F0F2F5; --line:#D2D8DF;
+  --ink:#111820; --ink-2:#465162; --ink-3:#647083;
+  --accent:#2540D9; --accent-ink:#FFFFFF; --accent-soft:#E2E7FC;
+  --rec:#D91F26; --rec-ink:#FFFFFF; --rec-soft:#FBE3E4;
+  --mark:#9A6700; --mark-ink:#FFFFFF; --mark-soft:#F7EACA;
+  --ok:#14764A; --ok-soft:#DCF1E5;
+  --scrim:rgba(8,12,18,.55);
+  --shadow:0 1px 2px rgba(17,24,32,.08),0 8px 24px rgba(17,24,32,.08);
+  --f-display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",Impact,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1117; --surface:#161C25; --surface-2:#1E2530; --line:#2A3340;
+  --ink:#E9EDF3; --ink-2:#A8B2C0; --ink-3:#8592A2;
+  --accent:#8196FF; --accent-ink:#0B1030; --accent-soft:#1D2646;
+  --rec:#FF5A60; --rec-ink:#2A0507; --rec-soft:#3A1A1D;
+  --mark:#F0B94A; --mark-ink:#231600; --mark-soft:#392E14;
+  --ok:#4CC38A; --ok-soft:#14301F;
+  --scrim:rgba(0,0,0,.65);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1117; --surface:#161C25; --surface-2:#1E2530; --line:#2A3340;
+  --ink:#E9EDF3; --ink-2:#A8B2C0; --ink-3:#8592A2;
+  --accent:#8196FF; --accent-ink:#0B1030; --accent-soft:#1D2646;
+  --rec:#FF5A60; --rec-ink:#2A0507; --rec-soft:#3A1A1D;
+  --mark:#F0B94A; --mark-ink:#231600; --mark-soft:#392E14;
+  --ok:#4CC38A; --ok-soft:#14301F;
+  --scrim:rgba(0,0,0,.65);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html.lock{overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.disp{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.015em;line-height:1}
+.dim{color:var(--ink-3)}
+.eyebrow{font:600 11px/1.2 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.lbl{font:600 11px/1.2 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+#app{max-width:720px;margin:0 auto}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px 8px}
+.brand{display:flex;align-items:center;gap:8px;font-size:26px}
+.brand .ic{width:24px;height:24px;color:var(--accent)}
+.sync{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:500 12px var(--f-body);color:var(--ink-2)}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--ink-3)}
+.sync.ok i{background:var(--ok)}.sync.pending i{background:var(--mark)}.sync.err i{background:var(--rec)}
+.wrap{padding-block:6px 132px;display:grid;gap:18px;min-width:0}
+.wrap>*{min-width:0}
+.pg-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.pg-h h1{font-size:40px}
+
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.nav-in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;border:0;border-radius:12px;background:transparent;color:var(--ink-3);font:600 11px var(--f-body);letter-spacing:.05em}
+.nav button .ic{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+
+.btn{min-height:46px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 14px var(--f-body);display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn.pri{background:var(--accent);border-color:transparent;color:var(--accent-ink)}
+.btn.rec{background:var(--rec);border-color:transparent;color:var(--rec-ink)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--accent)}
+.btn.danger{color:var(--rec)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:13px;border-radius:10px}
+.btn.big{min-height:60px;font-size:16px;border-radius:14px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.armed{background:var(--rec);color:var(--rec-ink);border-color:transparent}
+.chip{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:500 13px var(--f-body);display:inline-flex;align-items:center;gap:6px;flex:none;color:var(--ink)}
+.chip .ic{width:15px;height:15px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--accent-ink)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips.wrapx{flex-wrap:wrap;overflow:visible}
+.in{width:100%;min-height:46px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px;line-height:1.35}
+textarea.in{resize:vertical;display:block}
+.in::placeholder{color:var(--ink-3)}
+.f{display:grid;gap:7px;margin-bottom:16px}
+.row{display:flex;gap:10px;align-items:center}
+.row>.in{flex:1;min-width:0}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);font:600 11px/1.5 var(--f-body);letter-spacing:.03em;white-space:nowrap}
+.tag.z-in{background:var(--accent-soft);color:var(--accent)}
+.tag.z-out{background:var(--ok-soft);color:var(--ok)}
+.tag.z-phx{background:var(--mark-soft);color:var(--mark)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.list>*+*{border-top:1px solid var(--line)}
+.empty{padding:22px 18px;color:var(--ink-2);display:grid;gap:6px}
+.empty b{font:800 20px var(--f-display);text-transform:uppercase;letter-spacing:.02em;color:var(--ink)}
+
+/* Desk */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.hero-num{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hero-num b{font:800 clamp(72px,22vw,108px)/.85 var(--f-display)}
+.hero-num span{font:500 15px var(--f-body);color:var(--ink-2)}
+.prog{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0}
+.mini dt{font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.mini dd{margin:2px 0 0;font:500 20px var(--f-mono);font-variant-numeric:tabular-nums}
+.zbar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;background:var(--surface-2)}
+.zbar i{display:block;min-width:6px}
+.zl{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-2)}
+.zl span{display:inline-flex;align-items:center;gap:6px}
+.zl em{width:9px;height:9px;border-radius:3px;display:inline-block}
+.zc-in{background:var(--accent)}.zc-out{background:var(--ok)}.zc-phx{background:var(--mark)}.zc-oth{background:var(--ink-3)}
+.cta{display:grid;grid-template-columns:1.5fr 1fr;gap:10px}
+.recdot{width:11px;height:11px;border-radius:50%;background:var(--rec);display:inline-block;flex:none}
+.btn.rec .recdot{background:var(--rec-ink)}
+.live-ban{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:var(--rec-soft);border:1px solid var(--rec)}
+.live-ban .recdot{animation:pulse 1.6s ease-in-out infinite}
+.live-ban>div{flex:1;min-width:0}
+.live-ban b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.sec-h h2{font-size:22px}
+.rowx{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.rowx>div{flex:1;min-width:0}
+.rowx .t1{font-weight:600;overflow-wrap:anywhere}
+.rowx .t2{font-size:13px;color:var(--ink-2);overflow-wrap:anywhere}
+.gauge{width:54px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;flex:none}
+.gauge i{display:block;height:100%;background:var(--mark)}
+.pre-link{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--mark-soft);color:var(--ink);border:0;width:100%;text-align:left}
+.pre-link>span{flex:1}
+
+/* Questions */
+.seg2{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border-radius:12px;background:var(--surface-2)}
+.seg2 button{min-height:40px;border:0;border-radius:10px;background:transparent;font:600 14px var(--f-body);color:var(--ink-2)}
+.seg2 button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(17,24,32,.14)}
+.seg2 span{font:500 12px var(--f-mono);color:var(--ink-3);margin-left:4px}
+.qrow{display:flex;align-items:stretch}
+.star{width:52px;flex:none;border:0;background:transparent;color:var(--ink-3);display:flex;align-items:center;justify-content:center}
+.star[aria-pressed="true"]{color:var(--mark)}
+.star[aria-pressed="true"] .ic{fill:currentColor}
+.qmain{flex:1;min-width:0;text-align:left;border:0;background:transparent;padding:12px 14px 12px 0;display:grid;gap:5px}
+.qt{font-weight:500;overflow-wrap:anywhere}
+.qm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}
+.lo-card{display:grid;gap:10px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.lo-card h3{font-size:26px}
+.lo-card ol{margin:0;padding-left:20px;color:var(--ink-2);font-size:14px}
+.lo-card li{overflow-wrap:anywhere}
+.pk{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;min-height:50px}
+.pk+.pk{border-top:1px solid var(--line)}
+.pk.on{background:var(--accent-soft)}
+.pkn{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.pk.on .pkn{background:var(--accent);border-color:transparent;color:var(--accent-ink);font-weight:500}
+.pkt{flex:1;min-width:0;overflow-wrap:anywhere}
+.pk-list{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-top:8px}
+
+/* Log */
+.lrow{display:grid;gap:6px;width:100%;text-align:left;border:0;background:transparent;padding:14px 16px}
+.l1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.l1 b{font-size:16px;overflow-wrap:anywhere}
+.stars{display:inline-flex;gap:1px;color:var(--mark);margin-left:auto}
+.stars .ic{width:14px;height:14px}
+.stars .on{fill:currentColor}
+.l2{color:var(--ink-2);overflow-wrap:anywhere}
+.l3{font-size:12px;color:var(--ink-3)}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.bdg{font:600 11px/1.5 var(--f-body);padding:1px 8px;border-radius:6px;border:1px solid var(--line);color:var(--ink-3)}
+.bdg.on{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.bdg.warn{background:var(--mark-soft);border-color:transparent;color:var(--mark)}
+.day-h{display:flex;justify-content:space-between;align-items:baseline;padding:10px 16px;background:var(--surface-2);font:600 11px var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+
+/* Plan */
+.stepper{display:flex;align-items:center;gap:14px}
+.stepper b{font:800 54px/1 var(--f-display);min-width:2ch;text-align:center}
+.ck{display:flex;align-items:center;min-height:50px}
+.ckb{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;border:0;background:transparent;padding:8px 6px 8px 14px;min-height:50px}
+.box{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--ink-3);display:flex;align-items:center;justify-content:center;flex:none;color:transparent}
+.ck.d .box{background:var(--ok);border-color:transparent;color:#fff}
+.ck.d .ckt{color:var(--ink-3);text-decoration:line-through}
+.ckt{overflow-wrap:anywhere}
+.xbtn{width:44px;height:44px;border:0;background:transparent;color:var(--ink-3);display:flex;align-items:center;justify-content:center;flex:none}
+.zh{display:flex;justify-content:space-between;padding:8px 14px;background:var(--surface-2);font:600 11px var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+
+/* Sheets */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:50}
+.sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:680px;max-height:92%;overflow:auto;overscroll-behavior:contain;z-index:51;
+  background:var(--bg);border-radius:20px 20px 0 0;box-shadow:var(--shadow);
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sh-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.sh-head h2{font-size:30px}
+.sh-foot{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+.sh-sec{margin:8px 0 16px;display:grid;gap:8px}
+.irow{padding:12px 14px;display:grid;gap:8px}
+.irow-h{display:flex;gap:10px;align-items:flex-start}
+.tcl{font-size:12px;color:var(--ink-3);padding-top:2px;flex:none}
+.itx{overflow-wrap:anywhere;font-weight:500}
+.r3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rt{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font:600 14px var(--f-body)}
+.r3.sm .rt{min-height:34px;font-size:13px}
+.rt[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:transparent}
+.rt[data-r="3"][aria-pressed="true"]{background:var(--mark);color:var(--mark-ink)}
+.stars-in{display:flex;gap:6px}
+.stars-in button{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink-3);display:flex;align-items:center;justify-content:center}
+.stars-in button[aria-pressed="true"]{color:var(--mark);border-color:var(--mark)}
+.stars-in button[aria-pressed="true"] .ic{fill:currentColor}
+.mkrow{display:flex;gap:8px;align-items:center;padding:8px 6px 8px 14px}
+.mkrow .in{min-height:40px;font-size:15px}
+
+/* On air */
+#air{position:fixed;inset:0;z-index:40;background:var(--bg);border-top:4px solid var(--rec);
+  padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.air-in{max-width:720px;margin:0 auto;height:100%;display:flex;flex-direction:column;min-height:0}
+.air-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:10px 4px}
+.rect{display:flex;align-items:center;gap:8px;color:var(--rec);flex:none}
+.rect .recdot{animation:pulse 1.6s ease-in-out infinite}
+.tcbig{font:500 34px/1 var(--f-mono);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.air-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--ink-2);padding-bottom:8px}
+.air-sub span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.link{border:0;background:transparent;color:var(--accent);font:600 13px var(--f-body);padding:6px 0;flex:none}
+.segs{display:flex;gap:4px;padding-bottom:10px}
+.seg{flex:1;min-width:0;height:24px;border:0;background:transparent;padding:0;display:flex;align-items:center}
+.seg i{display:block;width:100%;height:6px;border-radius:3px;background:var(--line)}
+.seg.asked i{background:var(--accent)}
+.seg.skip i{background:repeating-linear-gradient(135deg,var(--ink-3) 0 3px,var(--line) 3px 6px)}
+.seg.cur i{height:10px;outline:2px solid var(--ink);outline-offset:1px}
+.air-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:12px;align-content:start;padding-bottom:10px}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.qc-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
+.qc-top .ok{color:var(--ok)}
+.qtext{font:600 clamp(24px,6.6vw,34px)/1.2 var(--f-body);letter-spacing:-.01em;overflow-wrap:anywhere}
+.qcard.end .qtext{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:38px;letter-spacing:.015em}
+.qpanel{display:grid;gap:10px}
+.qr{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;min-height:46px}
+.qr+.qr{border-top:1px solid var(--line)}
+.qr.cur{background:var(--accent-soft)}
+.qr .n{font-size:12px;color:var(--ink-3);width:22px;flex:none}
+.qr .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qr .st{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);flex:none}
+.qr.asked .st{color:var(--ok)}
+.air-foot{display:grid;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
+.mkg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mk{min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font:600 13px var(--f-body);padding:0 6px}
+.mk.gold{background:var(--mark-soft);border-color:transparent;color:var(--mark)}
+.mk:active{transform:scale(.97)}
+.act3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+
+/* Prompter HUD */
+#hud{position:fixed;inset:0;z-index:60;background:#000;color:#fff;color-scheme:dark;
+  padding:env(safe-area-inset-top,0px) max(20px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.hud-in{max-width:1100px;margin:0 auto;height:100%;display:flex;flex-direction:column;min-height:0}
+.hud-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 12px;border-bottom:1px solid #1b2433}
+.hud-mode{display:flex;align-items:center;gap:10px;font:500 13px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#FF4D63;min-width:0}
+.hud-mode .recdot{background:#FF4D63;width:10px;height:10px;animation:pulse 1.6s ease-in-out infinite}
+.hud-tc{font:500 15px var(--f-mono);color:#9AA6B8;font-variant-numeric:tabular-nums;margin-left:6px;letter-spacing:.02em}
+.hud-ctl{display:flex;gap:8px;flex:none}
+.hud-b{min-height:40px;min-width:44px;padding:0 14px;border:0;border-radius:10px;background:#1C2433;color:#E9EDF3;font:700 15px var(--f-body)}
+.hud-mid{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:20px 0}
+.hud-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.hud-tag{padding:4px 14px;border-radius:999px;border:1px solid #12397F;background:#07183A;color:#4A8DFF;font:500 13px var(--f-mono);letter-spacing:.12em;text-transform:uppercase}
+.hud-q{margin:0;font-family:var(--f-body);font-weight:700;font-size:calc(clamp(30px,7vw,64px)*var(--hfs,1));line-height:1.1;letter-spacing:-.02em;color:#fff;text-shadow:0 0 24px rgba(255,255,255,.45);overflow-wrap:anywhere;max-width:100%}
+.hud-tip{margin:0;font:italic 500 clamp(15px,2.4vw,20px)/1.4 var(--f-body);color:#8D99AD;max-width:44ch}
+.hud-foot{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding-top:12px;border-top:1px solid #1b2433}
+.hud-nav{min-height:52px;padding:0 20px;border-radius:12px;border:1px solid #243049;background:#0B1220;color:#E9EDF3;font:700 16px var(--f-body);display:inline-flex;align-items:center;gap:8px;justify-self:start}
+.hud-nav.nx{justify-self:end;background:#0A60FF;border-color:transparent;color:#fff;box-shadow:0 0 22px rgba(10,96,255,.5)}
+.hud-nav[disabled]{opacity:.35;box-shadow:none}
+.hud-nav .ic{width:18px;height:18px}
+.hud-ct{font:500 15px var(--f-mono);color:#6C788C;letter-spacing:.08em}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translate(-50%,-12px);z-index:70;max-width:min(92vw,420px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font:500 14px var(--f-body);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.recdot,.live-ban .recdot,.rect .recdot{animation:none!important}#toast{transition:none}.mk:active{transform:none}}
+@media (min-width:600px){.pg-h h1{font-size:46px}}
+</style>
+
+<div id="app">
+  <header class="top">
+    <div class="brand disp"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Mic Check</div>
+    <button class="sync" id="sync" data-act="syncnow" aria-label="Sync status"><i></i><span>Connecting…</span></button>
+  </header>
+  <main id="view" class="wrap"></main>
+</div>
+<nav class="nav" aria-label="Sections"><div class="nav-in">
+  <button data-act="tab" data-v="desk"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Desk</button>
+  <button data-act="tab" data-v="q"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10 9.5a2 2 0 1 1 3 1.7c-.7.4-1 .8-1 1.5"/><circle cx="12" cy="14.8" r=".5"/></svg>Questions</button>
+  <button data-act="tab" data-v="log"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 4v3.5M12 16.5V20M4 12h3.5M16.5 12H20"/></svg>Log</button>
+  <button data-act="tab" data-v="plan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l2 2 3-3.5M4 15l2 2 3-3.5M13 7h7M13 16h7"/></svg>Plan</button>
+</div></nav>
+<div id="air" hidden></div>
+<div id="hud" hidden role="dialog" aria-modal="true" aria-label="Prompter"></div>
+<div id="layer"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants ---------- */
+const CATS=['Warm-up','Story','Issue','Hot take','Follow-up','Closer'];
+const ZONES=[['in','Inside'],['out','Outside'],['phx','Around Phoenix'],['oth','Other']];
+const ZL=Object.fromEntries(ZONES);
+const MK=[['gold','Gold quote'],['fu','Follow up'],['br','B-roll'],['fix','Fix in edit'],['cut','Cut point'],['note','Note']];
+const MKL=Object.fromEntries(MK);
+const RL=['','Weak','Good','Gold'];
+const LS='micCheck.v1';
+const IC={
+  star:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  minus:'<path d="M5 12h14"/>'
+};
+function ic(n,c){return '<svg class="ic '+(c||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'}
+
+/* ---------- state ---------- */
+const S={
+  main:{q:[],lo:[],spots:[],pre:[],wrap:[],goal:10,u:0},
+  iv:{},
+  ui:{tab:'desk',qview:'bank',qcat:'all',qstar:false,qs:'',lz:'all',ls:'',lfu:false,lastZ:'in'},
+  sync:{dirtyMain:false,dirty:{},state:'boot',last:0},
+  ready:false
+};
+let DB,DL;
+try{
+  const o=JSON.parse(localStorage.getItem(LS)||'null');
+  if(o&&o.main){
+    S.main=Object.assign(S.main,o.main);
+    S.iv=o.iv||{};
+    S.sync.dirtyMain=!!o.dirtyMain;
+    S.sync.dirty=o.dirty||{};
+    if(o.lastZ)S.ui.lastZ=o.lastZ;
+  }
+}catch(e){}
+
+/* ---------- helpers ---------- */
+const q$=(s,r)=>(r||document).querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const p2=n=>String(n).padStart(2,'0');
+function tc(sec){sec=Math.max(0,Math.floor(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return (h?h+':':'')+p2(m)+':'+p2(s)}
+function dk(ts){const d=new Date(ts);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
+function ftime(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}
+function fdt(ts){return new Date(ts).toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+function dayLabel(k){
+  const t=dk(Date.now()),y=dk(Date.now()-864e5);
+  if(k===t)return 'Today';if(k===y)return 'Yesterday';
+  const a=k.split('-').map(Number);
+  return new Date(a[0],a[1]-1,a[2]).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+}
+const clone=o=>JSON.parse(JSON.stringify(o));
+const ivs=()=>Object.values(S.iv).filter(i=>!i.del);
+const doneIvs=()=>ivs().filter(i=>!i.live);
+function toast(msg){const t=q$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2300)}
+function buzz(){try{navigator.vibrate&&navigator.vibrate(14)}catch(e){}}
+
+/* ---------- persistence + sync ---------- */
+let lsT=0,dbT=0,retryT=0,flushing=false;
+function saveLocal(){
+  try{localStorage.setItem(LS,JSON.stringify({main:S.main,iv:S.iv,dirtyMain:S.sync.dirtyMain,dirty:S.sync.dirty,lastZ:S.ui.lastZ}))}catch(e){}
+}
+function persist(){clearTimeout(lsT);lsT=setTimeout(saveLocal,250)}
+function touchMain(){S.main.u=Date.now();S.sync.dirtyMain=true;persist();queueFlush()}
+function touchIv(iv){iv.u=Date.now();S.sync.dirty[iv.id]=1;persist();queueFlush()}
+function queueFlush(){if(!DB)return;clearTimeout(dbT);setChip('pending');dbT=setTimeout(flush,2500)}
+async function flush(){
+  if(!DB||flushing||!S.ready)return;
+  flushing=true;
+  try{
+    if(S.sync.dirtyMain){
+      const u=S.main.u;
+      await DB.doc('desk/main').set(clone(S.main));
+      if(S.main.u===u)S.sync.dirtyMain=false;
+    }
+    for(const id of Object.keys(S.sync.dirty)){
+      const iv=S.iv[id];
+      if(!iv){delete S.sync.dirty[id];continue}
+      const u=iv.u;
+      await DB.doc('desk/main/interviews/'+id).set(clone(iv));
+      if(iv.u===u)delete S.sync.dirty[id];
+    }
+    saveLocal();
+    const left=S.sync.dirtyMain||Object.keys(S.sync.dirty).length;
+    flushing=false;
+    if(left){queueFlush();return}
+    S.sync.last=Date.now();setChip('ok');
+  }catch(e){
+    flushing=false;
+    const code=e&&e.code;
+    if(code==='invalid_argument'||code==='quota_exceeded'||code==='revoked'){setChip('err')}
+    else{setChip('pending');clearTimeout(retryT);retryT=setTimeout(flush,15000)}
+  }
+}
+function setChip(st){
+  if(st)S.sync.state=st;
+  const el=q$('#sync');if(!el)return;
+  const m={boot:['','Connecting…','Connecting to your saved data.'],ok:['ok','Synced','Everything is saved to your account.'],pending:['pending','Syncing…','Saved on this phone. Sending to your account.'],local:['','Phone only','Saved in this browser. Sync is not available in this view.'],err:['err','Sync paused','Your account could not store the latest change. Notes are still saved on this phone.']}[S.sync.state]||['','',''];
+  el.className='sync '+m[0];el.title=m[2];el.querySelector('span').textContent=m[1];
+}
+function mm(fn){
+  if(!S.ready){toast('Still connecting. Try again in a second.');return false}
+  fn();touchMain();return true;
+}
+function useCap(name){
+  const c=window.claude;
+  if(!c||typeof c.use!=='function')return Promise.resolve(null);
+  return Promise.race([c.use(name).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),9000))]).catch(()=>null);
+}
+async function initDb(){
+  const caps=await Promise.all([useCap('db'),useCap('downloads')]);
+  DB=caps[0]||null;DL=caps[1]||null;
+  if(!DB){S.ready=true;setChip('local');render();return}
+  const guard=setTimeout(()=>{if(!S.ready){S.ready=true;setChip('pending');render()}},8000);
+  try{
+    const res=await Promise.all([DB.doc('desk/main').get(),DB.collection('desk/main/interviews').get()]);
+    const ms=res[0],qs=res[1];
+    if(ms.exists){
+      const rm=clone(ms.data());
+      if((rm.u||0)>(S.main.u||0)){S.main=Object.assign({q:[],lo:[],spots:[],pre:[],wrap:[],goal:10,u:0},rm);S.sync.dirtyMain=false}
+      else if((S.main.u||0)>(rm.u||0))S.sync.dirtyMain=true;
+    }else if(S.main.u>0)S.sync.dirtyMain=true;
+    const seen={};
+    qs.docs.forEach(d=>{
+      const r=clone(d.data());seen[d.id]=1;
+      const l=S.iv[d.id];
+      if(!l||(r.u||0)>(l.u||0)){S.iv[d.id]=r;delete S.sync.dirty[d.id]}
+      else if((l.u||0)>(r.u||0))S.sync.dirty[d.id]=1;
+    });
+    Object.keys(S.iv).forEach(id=>{if(!seen[id])S.sync.dirty[id]=1});
+    clearTimeout(guard);
+    S.ready=true;saveLocal();setChip('ok');render();flush();
+  }catch(e){
+    clearTimeout(guard);S.ready=true;setChip('pending');render();
+    clearTimeout(retryT);retryT=setTimeout(flush,15000);
+  }
+}
+
+/* ---------- derived data ---------- */
+function stats(){
+  const m={};
+  ivs().forEach(iv=>(iv.items||[]).forEach(it=>{
+    if(!it.qid)return;
+    const o=m[it.qid]||(m[it.qid]={n:0,rs:0,rn:0});
+    if(it.st==='asked'){o.n++;if(it.r){o.rs+=it.r;o.rn++}}
+  }));
+  return m;
+}
+function ivName(i){return i.who||'Unnamed'}
+function hay(i){
+  return [i.who,i.desc,i.h,i.notes,i.clip,ZL[i.z]].concat((i.items||[]).map(x=>x.t+' '+x.note),(i.mk||[]).map(m=>m.note)).join(' ').toLowerCase();
+}
+function starsHTML(n){let s='';for(let i=1;i<=5;i++)s+=ic('star',i<=n?'on':'');return '<span class="stars" aria-label="'+n+' of 5">'+s+'</span>'}
+
+/* ---------- views ---------- */
+function render(){
+  const t=S.ui.tab,v=q$('#view');
+  v.innerHTML=t==='desk'?vDesk():t==='q'?vQ():t==='log'?vLog():vPlan();
+  document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===t?'page':'false'));
+  setChip();
+}
+
+function vDesk(){
+  const today=dk(Date.now());
+  const L=doneIvs().filter(i=>dk(i.c)===today);
+  const n=L.length,goal=S.main.goal||0;
+  const cam=L.reduce((a,i)=>a+(i.t0&&i.t1?(i.t1-i.t0)/1000:0),0);
+  const gold=L.reduce((a,i)=>a+(i.mk||[]).filter(m=>m.k==='gold').length,0);
+  const mks=L.reduce((a,i)=>a+(i.mk||[]).length,0);
+  const zc={in:0,out:0,phx:0,oth:0};L.forEach(i=>{zc[i.z||'oth']=(zc[i.z||'oth']||0)+1});
+  const live=ivs().find(i=>i.live);
+  const fu=doneIvs().filter(i=>i.fu===1).sort((a,b)=>b.c-a.c);
+  const st=stats();
+  const top=S.main.q.map(q=>({q:q,s:st[q.id]})).filter(x=>x.s&&x.s.rn>0).map(x=>({q:x.q,avg:x.s.rs/x.s.rn,n:x.s.rn})).sort((a,b)=>b.avg-a.avg||b.n-a.n).slice(0,3);
+  const pre=S.main.pre,pd=pre.filter(x=>x.d).length;
+  const pct=goal?Math.min(100,Math.round(n/goal*100)):0;
+  const dl=new Date().toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  let h='<div class="pg-h"><div><div class="eyebrow">Today · '+esc(dl)+'</div><h1 class="disp">Desk</h1></div></div>';
+  if(live){
+    h+='<div class="live-ban"><span class="recdot"></span><div><b>Rolling: '+esc(ivName(live))+'</b><span class="mono dim">'+tc((Date.now()-live.t0)/1000)+' on the clock</span></div><button class="btn rec sm" data-act="prep">Resume</button></div>';
+  }
+  h+='<section class="hero" aria-label="Today\'s tally"><div class="hero-num"><b>'+n+'</b><span>'+(goal?'of '+goal+' interviews':(n===1?'interview':'interviews'))+'</span></div>';
+  if(goal)h+='<div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="'+goal+'" aria-valuenow="'+n+'"><i style="width:'+pct+'%"></i></div>';
+  h+='<dl class="mini"><div><dt>On camera</dt><dd>'+tc(cam)+'</dd></div><div><dt>Gold quotes</dt><dd>'+gold+'</dd></div><div><dt>Markers</dt><dd>'+mks+'</dd></div></dl>';
+  if(n){
+    h+='<div class="zbar" aria-hidden="true">'+ZONES.filter(z=>zc[z[0]]).map(z=>'<i class="zc-'+z[0]+'" style="flex:'+zc[z[0]]+'"></i>').join('')+'</div>';
+    h+='<div class="zl">'+ZONES.filter(z=>zc[z[0]]).map(z=>'<span><em class="zc-'+z[0]+'"></em>'+z[1]+' '+zc[z[0]]+'</span>').join('')+'</div>';
+  }
+  h+='</section>';
+  h+='<div class="cta"><button class="btn rec big" data-act="prep"><span class="recdot"></span>'+(live?'Back to live':'Start interview')+'</button><button class="btn big" data-act="quick">Quick log</button></div>';
+  if(pre.length&&pd<pre.length){
+    h+='<button class="pre-link" data-act="tab" data-v="plan"><span><b>Pre-flight</b> · '+pd+' of '+pre.length+' checked</span>'+ic('check')+'</button>';
+  }
+  if(fu.length){
+    h+='<section><div class="sec-h"><h2 class="disp">To follow up</h2><button class="link" data-act="tolog">See all</button></div><div class="list">'+
+      fu.slice(0,4).map(i=>'<div class="rowx"><div><div class="t1">'+esc(ivName(i))+(i.h?' <span class="mono dim">'+esc(i.h)+'</span>':'')+'</div><div class="t2">'+esc(i.desc||ZL[i.z]||'')+'</div></div><button class="btn sm" data-act="fudone" data-id="'+i.id+'">Done</button></div>').join('')+'</div></section>';
+  }
+  h+='<section><div class="sec-h"><h2 class="disp">What\'s landing</h2></div>';
+  if(top.length){
+    h+='<div class="list">'+top.map(x=>'<div class="rowx"><div><div class="t1">'+esc(x.q.t)+'</div><div class="t2 mono">avg '+x.avg.toFixed(1)+' of 3 · rated '+x.n+'×</div></div><span class="gauge" aria-hidden="true"><i style="width:'+Math.round(x.avg/3*100)+'%"></i></span></div>').join('')+'</div>';
+  }else{
+    h+='<div class="list"><div class="empty"><b>Nothing rated yet</b><span>During an interview, tap Weak, Good or Gold after each answer. The questions that keep getting Gold show up here.</span></div></div>';
+  }
+  h+='</section>';
+  return h;
+}
+
+function qStatLine(q,st){
+  const s=st[q.id];
+  if(!s||!s.n)return '<span class="dim">not asked yet</span>';
+  return '<span class="mono dim">asked '+s.n+'×'+(s.rn?' · avg '+(s.rs/s.rn).toFixed(1)+'/3':'')+'</span>';
+}
+function qListHTML(){
+  const st=stats(),term=S.ui.qs.trim().toLowerCase();
+  let a=S.main.q.slice();
+  if(S.ui.qcat!=='all')a=a.filter(q=>q.c===S.ui.qcat);
+  if(S.ui.qstar)a=a.filter(q=>q.s);
+  if(term)a=a.filter(q=>q.t.toLowerCase().includes(term));
+  if(!a.length){
+    return S.main.q.length?'<div class="empty"><b>No matches</b><span>Try a different filter or clear the search.</span></div>':'<div class="empty"><b>Your bank is empty</b><span>Type a question above, or paste a whole list with one question per line.</span></div>';
+  }
+  return a.map(q=>'<div class="qrow"><button class="star" data-act="qstarq" data-id="'+q.id+'" aria-pressed="'+!!q.s+'" aria-label="Star question">'+ic('star')+'</button><button class="qmain" data-act="qedit" data-id="'+q.id+'"><span class="qt">'+esc(q.t)+'</span><span class="qm"><span class="tag">'+esc(q.c)+'</span>'+qStatLine(q,st)+'</span></button></div>').join('');
+}
+function vQ(){
+  let h='<div class="pg-h"><div><div class="eyebrow">What to ask</div><h1 class="disp">Questions</h1></div></div>';
+  h=h.replace('</div></div>','</div><button class="btn sm" data-act="hud">Prompter</button></div>');
+  h+='<div class="seg2"><button data-act="qview" data-v="bank" aria-pressed="'+(S.ui.qview==='bank')+'">Bank<span>'+S.main.q.length+'</span></button><button data-act="qview" data-v="lo" aria-pressed="'+(S.ui.qview==='lo')+'">Loadouts<span>'+S.main.lo.length+'</span></button></div>';
+  if(S.ui.qview==='lo'){
+    h+='<button class="btn pri" data-act="lonew">'+ic('plus')+' New loadout</button>';
+    if(!S.main.lo.length){
+      h+='<div class="list"><div class="empty"><b>No loadouts yet</b><span>A loadout is a saved running order. Make one per situation: a 3-question crowd pass, a long sit-down, a closing round.</span></div></div>';
+    }else{
+      h+=S.main.lo.map(l=>{
+        const qs=l.qids.map(id=>S.main.q.find(q=>q.id===id)).filter(Boolean);
+        return '<div class="lo-card"><div><h3 class="disp">'+esc(l.name)+'</h3><span class="mono dim">'+qs.length+' question'+(qs.length===1?'':'s')+'</span></div>'+
+          (qs.length?'<ol>'+qs.slice(0,3).map(q=>'<li>'+esc(q.t)+'</li>').join('')+(qs.length>3?'<li class="dim">+ '+(qs.length-3)+' more</li>':'')+'</ol>':'')+
+          '<div class="row"><button class="btn rec" data-act="prep" data-lo="'+l.id+'" style="flex:1">Start with this</button><button class="btn" data-act="loedit" data-id="'+l.id+'">Edit</button></div></div>';
+      }).join('');
+    }
+    return h;
+  }
+  h+='<form class="card" data-form="qadd" style="display:grid;gap:10px"><textarea id="qnew" class="in" rows="2" placeholder="Type a question, or paste a list. One per line."></textarea><div class="row"><select id="qcat" class="in" aria-label="Type">'+CATS.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select><button class="btn pri" type="submit">'+ic('plus')+' Add</button></div></form>';
+  h+='<div style="display:grid;gap:10px"><input id="qsearch" class="in" type="search" placeholder="Search questions" value="'+esc(S.ui.qs)+'"><div class="chips">'+
+    '<button class="chip" data-act="qcat" data-c="all" aria-pressed="'+(S.ui.qcat==='all')+'">All</button>'+
+    CATS.map(c=>'<button class="chip" data-act="qcat" data-c="'+esc(c)+'" aria-pressed="'+(S.ui.qcat===c)+'">'+esc(c)+'</button>').join('')+
+    '<button class="chip" data-act="qstarf" aria-pressed="'+S.ui.qstar+'">'+ic('star')+' Starred</button></div></div>';
+  h+='<div class="list" id="qlist">'+qListHTML()+'</div>';
+  return h;
+}
+
+function logListHTML(){
+  const term=S.ui.ls.trim().toLowerCase();
+  let a=doneIvs().sort((x,y)=>y.c-x.c);
+  if(S.ui.lz!=='all')a=a.filter(i=>i.z===S.ui.lz);
+  if(S.ui.lfu)a=a.filter(i=>i.fu===1);
+  if(term)a=a.filter(i=>hay(i).includes(term));
+  if(!a.length){
+    return doneIvs().length?'<div class="empty"><b>No matches</b><span>Clear the search or filters to see everything.</span></div>':'<div class="empty"><b>Nothing logged yet</b><span>Finish an interview or use Quick log and it lands here, newest first, with timecoded markers and consent notes.</span></div>';
+  }
+  let h='',last='';
+  a.forEach(i=>{
+    const k=dk(i.c);
+    if(k!==last){last=k;const c=a.filter(x=>dk(x.c)===k).length;h+='<div class="day-h"><span>'+esc(dayLabel(k))+'</span><span class="mono">'+c+'</span></div>'}
+    const asked=(i.items||[]).filter(x=>x.st==='asked').length;
+    const bits=[ftime(i.c)];
+    if(i.t0&&i.t1)bits.push(tc((i.t1-i.t0)/1000));
+    if(asked)bits.push(asked+' Q'+(asked===1?'':'s'));
+    if((i.mk||[]).length)bits.push(i.mk.length+' marker'+(i.mk.length===1?'':'s'));
+    if(i.quick)bits.push('quick');
+    const c=i.cons||{};
+    h+='<button class="lrow" data-act="ivopen" data-id="'+i.id+'"><div class="l1"><b>'+esc(ivName(i))+'</b><span class="tag z-'+(i.z||'oth')+'">'+esc(ZL[i.z]||'Other')+'</span>'+(i.rate?starsHTML(i.rate):'')+'</div>'+
+      (i.desc?'<div class="l2">'+esc(i.desc)+'</div>':'')+
+      '<div class="l3 mono">'+bits.join(' · ')+'</div>'+
+      '<div class="badges"><span class="bdg '+(c.n?'on':'')+'">Name on cam</span><span class="bdg '+(c.p?'on':'warn')+'">'+(c.p?'OK to post':'No post OK yet')+'</span><span class="bdg '+(c.r?'on':'')+'">Release</span>'+(i.fu===1?'<span class="bdg warn">Follow up</span>':'')+'</div></button>';
+  });
+  return h;
+}
+function vLog(){
+  let h='<div class="pg-h"><div><div class="eyebrow">Everything you shot</div><h1 class="disp">Log</h1></div><button class="btn sm" data-act="exp">Export</button></div>';
+  h+='<div style="display:grid;gap:10px"><input id="lsearch" class="in" type="search" placeholder="Search names, notes, quotes" value="'+esc(S.ui.ls)+'"><div class="chips"><button class="chip" data-act="lzone" data-z="all" aria-pressed="'+(S.ui.lz==='all')+'">All</button>'+
+    ZONES.map(z=>'<button class="chip" data-act="lzone" data-z="'+z[0]+'" aria-pressed="'+(S.ui.lz===z[0])+'">'+z[1]+'</button>').join('')+
+    '<button class="chip" data-act="lfu" aria-pressed="'+S.ui.lfu+'">Follow up</button></div></div>';
+  h+='<div class="list" id="llist">'+logListHTML()+'</div>';
+  return h;
+}
+
+function ckRow(k,x){
+  return '<div class="ck '+(x.d?'d':'')+'"><button class="ckb" data-act="ck" data-k="'+k+'" data-id="'+x.id+'" aria-pressed="'+!!x.d+'"><span class="box">'+ic('check')+'</span><span class="ckt">'+esc(x.t)+'</span></button><button class="xbtn" data-act="ckdel" data-k="'+k+'" data-id="'+x.id+'" aria-label="Remove">'+ic('x')+'</button></div>';
+}
+function ckBlock(k,title,ph){
+  const a=S.main[k],d=a.filter(x=>x.d).length;
+  return '<section><div class="sec-h"><h2 class="disp">'+title+'</h2><span class="mono dim">'+d+'/'+a.length+'</span></div><div class="list">'+
+    (a.length?a.map(x=>ckRow(k,x)).join(''):'<div class="empty"><span>Nothing here yet.</span></div>')+'</div>'+
+    '<form class="row" data-form="ckadd" data-k="'+k+'" style="margin-top:10px"><input class="in" id="ck-'+k+'" placeholder="'+esc(ph)+'" aria-label="'+esc(ph)+'"><button class="btn" type="submit">'+ic('plus')+'</button></form>'+
+    (d?'<button class="link" data-act="ckreset" data-k="'+k+'">Uncheck all</button>':'')+'</section>';
+}
+function vPlan(){
+  let h='<div class="pg-h"><div><div class="eyebrow">Run of show</div><h1 class="disp">Plan</h1></div></div>';
+  h+='<section class="card" style="display:grid;gap:10px"><span class="lbl">Daily goal</span><div class="stepper"><button class="btn" data-act="goal" data-d="-1" aria-label="Fewer">'+ic('minus')+'</button><b>'+S.main.goal+'</b><button class="btn" data-act="goal" data-d="1" aria-label="More">'+ic('plus')+'</button><span class="dim">interviews a day</span></div></section>';
+  h+=ckBlock('pre','Pre-flight','Add a check, like “lav mic batteries”');
+  const sp=S.main.spots,sd=sp.filter(x=>x.d).length;
+  h+='<section><div class="sec-h"><h2 class="disp">Spots to cover</h2><span class="mono dim">'+sd+'/'+sp.length+'</span></div>';
+  if(sp.length){
+    h+='<div class="list">'+ZONES.map(z=>{
+      const g=sp.filter(x=>(x.z||'oth')===z[0]);
+      if(!g.length)return '';
+      const done=g.filter(x=>x.d).length;
+      return '<div><div class="zh"><span>'+z[1]+'</span><span class="mono">'+done+'/'+g.length+'</span></div>'+g.map(x=>ckRow('spots',x)).join('<div style="border-top:1px solid var(--line)"></div>')+'</div>';
+    }).join('')+'</div>';
+  }else h+='<div class="list"><div class="empty"><b>No spots yet</b><span>List the places you want to catch people: lines, lobbies, entrances, hotel bars.</span></div></div>';
+  h+='<form class="row" data-form="spotadd" style="margin-top:10px;flex-wrap:wrap"><input class="in" id="sp-t" placeholder="Add a spot" aria-label="Add a spot" style="flex:1 1 180px"><select id="sp-z" class="in" aria-label="Zone" style="flex:0 0 150px;width:150px">'+ZONES.map(z=>'<option value="'+z[0]+'"'+(z[0]===S.ui.lastZ?' selected':'')+'>'+z[1]+'</option>').join('')+'</select><button class="btn" type="submit">'+ic('plus')+'</button></form>';
+  if(sd)h+='<button class="link" data-act="ckreset" data-k="spots">Uncheck all</button>';
+  h+='</section>';
+  h+=ckBlock('wrap','End of day','Add a wrap-up task');
+  return h;
+}
+
+/* ---------- sheets ---------- */
+let shOpen=false,ivSh=null,prep=null,led=null,qed=null,pkKey=null;
+function showSheet(html){
+  const L=q$('#layer');
+  const old=q$('.sheet',L);const sc=old?old.scrollTop:0;
+  L.innerHTML='<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true">'+html+'</div>';
+  q$('.sheet',L).scrollTop=sc;
+  shOpen=true;document.documentElement.classList.add('lock');
+}
+function closeSheet(){
+  q$('#layer').innerHTML='';shOpen=false;
+  if(ivSh&&ivSh.mode==='quick'){
+    const iv=S.iv[ivSh.id];
+    if(iv&&!iv.who&&!iv.desc&&!iv.notes&&!iv.h){iv.del=1;touchIv(iv)}
+  }
+  ivSh=null;prep=null;led=null;qed=null;pkKey=null;
+  if(!airId)document.documentElement.classList.remove('lock');
+  render();
+}
+function head(title){return '<div class="sh-head"><h2 class="disp">'+title+'</h2><button class="btn ghost sm" data-act="close">Close</button></div>'}
+function zoneChips(act,cur){return '<div class="chips wrapx">'+ZONES.map(z=>'<button class="chip" data-act="'+act+'" data-z="'+z[0]+'" aria-pressed="'+(cur===z[0])+'">'+z[1]+'</button>').join('')+'</div>'}
+
+/* picker */
+function pickList(sel,term){
+  const a=S.main.q.filter(q=>!term||q.t.toLowerCase().includes(term));
+  if(!a.length)return '<p class="dim" style="padding:14px">'+(S.main.q.length?'No questions match.':'Add questions in the Questions tab first.')+'</p>';
+  return a.map(q=>{const i=sel.indexOf(q.id);return '<button type="button" class="pk '+(i>=0?'on':'')+'" data-act="pk" data-id="'+q.id+'" aria-pressed="'+(i>=0)+'"><span class="pkn mono">'+(i>=0?i+1:'')+'</span><span class="pkt">'+esc(q.t)+'</span><span class="tag">'+esc(q.c)+'</span></button>'}).join('');
+}
+function pickerHTML(sel){
+  return '<input id="pk-s" class="in" type="search" placeholder="Search questions" aria-label="Search questions"><div class="pk-list" id="pk-l">'+pickList(sel,'')+'</div>';
+}
+function curSel(){return pkKey==='prep'?prep.sel:pkKey==='led'?led.sel:[]}
+function refreshPick(){
+  const l=q$('#pk-l'),s=q$('#pk-s');if(!l)return;
+  l.innerHTML=pickList(curSel(),(s?s.value:'').trim().toLowerCase());
+  if(pkKey==='prep')prepSummary();
+  const c=q$('#led-count');if(c&&led)c.textContent=led.sel.length+' picked';
+}
+
+/* start-interview sheet */
+function prepIds(){
+  if(!prep)return [];
+  const all=S.main.q.map(q=>q.id);
+  if(prep.src==='star')return S.main.q.filter(q=>q.s).map(q=>q.id);
+  if(prep.src==='all')return all;
+  if(prep.src==='none')return [];
+  if(prep.src==='custom')return prep.sel.filter(id=>all.indexOf(id)>=0);
+  const l=S.main.lo.find(x=>x.id===prep.src);
+  return l?l.qids.filter(id=>all.indexOf(id)>=0):[];
+}
+function prepSummary(){
+  const el=q$('#prep-sum');if(!el)return;
+  const ids=prepIds();
+  const first=ids.length?S.main.q.find(q=>q.id===ids[0]):null;
+  el.innerHTML=ids.length?'<b class="mono">'+ids.length+'</b> question'+(ids.length===1?'':'s')+(first?' · opens with “'+esc(first.t)+'”':''):'No questions queued. You can still add ad-lib ones while rolling.';
+}
+function openPrep(src){
+  const hasStar=S.main.q.some(q=>q.s);
+  prep={who:'',desc:'',z:S.ui.lastZ||'in',src:src||(hasStar?'star':(S.main.lo[0]?S.main.lo[0].id:(S.main.q.length?'all':'none'))),sel:[]};
+  renderPrep();
+}
+function renderPrep(){
+  const starN=S.main.q.filter(q=>q.s).length;
+  const srcs=[];
+  if(starN)srcs.push(['star','Starred',starN]);
+  S.main.lo.forEach(l=>srcs.push([l.id,l.name,l.qids.filter(id=>S.main.q.some(q=>q.id===id)).length]));
+  srcs.push(['all','Everything',S.main.q.length]);
+  srcs.push(['custom','Pick now',prep.sel.length]);
+  srcs.push(['none','Ad-lib only',0]);
+  let h=head('Next interview');
+  h+='<div class="f"><label class="lbl" for="p-who">Who</label><input id="p-who" class="in" data-b="prep:who" value="'+esc(prep.who)+'" placeholder="Name, or “red hat by the main doors”" autocomplete="off"></div>';
+  h+='<div class="f"><label class="lbl" for="p-desc">Context</label><input id="p-desc" class="in" data-b="prep:desc" value="'+esc(prep.desc)+'" placeholder="Where they are, what they’re doing" autocomplete="off"></div>';
+  h+='<div class="f"><span class="lbl">Where</span>'+zoneChips('pz',prep.z)+'</div>';
+  h+='<div class="f"><span class="lbl">Questions</span><div class="chips wrapx">'+srcs.map(s=>'<button class="chip" data-act="psrc" data-s="'+esc(s[0])+'" aria-pressed="'+(prep.src===s[0])+'">'+esc(s[1])+(s[0]!=='none'?' <span class="mono" style="opacity:.75">'+s[2]+'</span>':'')+'</button>').join('')+'</div>';
+  if(prep.src==='custom'){pkKey='prep';h+='<p class="dim" style="font-size:13px">Tap in the order you want to ask them.</p>'+pickerHTML(prep.sel)}
+  h+='<p id="prep-sum" class="dim" style="font-size:13px"></p></div>';
+  h+='<button class="btn rec big" data-act="roll" style="width:100%"><span class="recdot"></span>Roll</button><p class="dim" style="font-size:12px;margin-top:8px;text-align:center">Hit record on your camera, then tap Roll. The clock starts at 00:00 so markers line up with your footage.</p>';
+  showSheet(h);prepSummary();
+}
+function roll(){
+  const ids=prepIds();
+  const items=ids.map(id=>S.main.q.find(q=>q.id===id)).filter(Boolean).map(q=>({k:uid('k'),qid:q.id,t:q.t,c:q.c,st:'todo',at:null,r:0,note:''}));
+  const t=Date.now();
+  const iv={id:uid('i'),c:t,t0:t,t1:0,live:true,del:0,quick:false,who:prep.who.trim(),desc:prep.desc.trim(),z:prep.z,h:'',clip:'',cons:{n:0,p:0,r:0},rate:0,fu:0,notes:'',items:items,idx:0,mk:[],u:0};
+  S.iv[iv.id]=iv;S.ui.lastZ=prep.z;touchIv(iv);
+  prep=null;pkKey=null;q$('#layer').innerHTML='';shOpen=false;
+  openAir(iv.id);
+}
+
+/* quick log */
+function quickLog(){
+  const t=Date.now();
+  const iv={id:uid('i'),c:t,t0:0,t1:0,live:false,del:0,quick:true,who:'',desc:'',z:S.ui.lastZ||'in',h:'',clip:'',cons:{n:0,p:0,r:0},rate:0,fu:0,notes:'',items:[],idx:0,mk:[],u:0};
+  S.iv[iv.id]=iv;touchIv(iv);
+  openIv(iv.id,'quick');
+}
+
+/* interview detail / wrap-up */
+function openIv(id,mode){ivSh={id:id,mode:mode||'edit'};renderIv()}
+function renderIv(){
+  const iv=S.iv[ivSh.id];if(!iv){closeSheet();return}
+  const m=ivSh.mode,c=iv.cons||{n:0,p:0,r:0};
+  let h=head(m==='wrap'?'Wrap up':m==='quick'?'Quick log':'Interview');
+  const dur=iv.t0&&iv.t1?tc((iv.t1-iv.t0)/1000):'';
+  h+='<p class="mono dim" style="margin:-6px 0 14px;font-size:13px">'+esc(fdt(iv.c))+(dur?' · '+dur+' on camera':'')+'</p>';
+  h+='<div class="f"><label class="lbl" for="i-who">Name</label><input id="i-who" class="in" data-b="iv:who" value="'+esc(iv.who)+'" placeholder="Name, spelled the way they said it" autocomplete="off"></div>';
+  h+='<div class="f"><label class="lbl" for="i-h">Handle or contact</label><input id="i-h" class="in" data-b="iv:h" value="'+esc(iv.h)+'" placeholder="@handle, email, or how to reach them" autocomplete="off" autocapitalize="off"></div>';
+  h+='<div class="f"><label class="lbl" for="i-d">Context</label><input id="i-d" class="in" data-b="iv:desc" value="'+esc(iv.desc)+'" placeholder="Where they are, what they’re doing" autocomplete="off"></div>';
+  h+='<div class="f"><span class="lbl">Where</span>'+zoneChips('iz',iv.z)+'</div>';
+  if(!iv.quick)h+='<div class="f"><label class="lbl" for="i-c">Clip or card label</label><input id="i-c" class="in" data-b="iv:clip" value="'+esc(iv.clip)+'" placeholder="So you can find the footage later" autocomplete="off"></div>';
+  h+='<div class="f"><span class="lbl">Consent</span><div class="chips wrapx">'+[['n','Said name on camera'],['p','OK to post'],['r','Release signed']].map(x=>'<button class="chip" data-act="ic" data-k="'+x[0]+'" aria-pressed="'+!!c[x[0]]+'">'+ic('check')+x[1]+'</button>').join('')+'</div></div>';
+  h+='<div class="f"><span class="lbl">How good was it</span><div class="stars-in">'+[1,2,3,4,5].map(n=>'<button data-act="irate" data-r="'+n+'" aria-pressed="'+(iv.rate>=n)+'" aria-label="'+n+' of 5">'+ic('star')+'</button>').join('')+'</div></div>';
+  h+='<div class="f"><button class="chip" data-act="ifu" aria-pressed="'+(iv.fu===1)+'" style="justify-self:start">Needs a follow up</button></div>';
+  h+='<div class="f"><label class="lbl" for="i-n">Notes</label><textarea id="i-n" class="in" rows="3" data-b="iv:notes" placeholder="Anything to remember when you edit">'+esc(iv.notes)+'</textarea></div>';
+  const asked=(iv.items||[]).filter(x=>x.st!=='todo'),notReached=(iv.items||[]).length-asked.length;
+  if(asked.length){
+    h+='<div class="sh-sec"><span class="lbl">Questions</span><div class="list">'+asked.map(x=>
+      '<div class="irow"><div class="irow-h"><span class="mono tcl">'+(x.st==='asked'?tc(x.at||0):'skip')+'</span><span class="itx">'+esc(x.t)+'</span></div>'+
+      (x.st==='asked'?'<div class="r3 sm">'+[1,2,3].map(r=>'<button class="rt" data-act="itr" data-id="'+x.k+'" data-r="'+r+'" data-r-v="'+r+'" aria-pressed="'+(x.r===r)+'">'+RL[r]+'</button>').join('')+'</div><textarea class="in" rows="1" data-b="it:'+x.k+':note" placeholder="Note or quote" style="min-height:40px;font-size:15px">'+esc(x.note)+'</textarea>':'')+
+      (!x.qid?'<button class="link" data-act="tobank" data-id="'+x.k+'" style="justify-self:start">Save to question bank</button>':'')+'</div>').join('')+'</div>'+(notReached?'<p class="dim" style="font-size:13px">'+notReached+' not reached</p>':'')+'</div>';
+  }
+  if((iv.mk||[]).length){
+    h+='<div class="sh-sec"><span class="lbl">Markers</span><div class="list">'+iv.mk.slice().sort((a,b)=>a.at-b.at).map(x=>
+      '<div class="mkrow"><span class="mono tcl" style="padding:0">'+tc(x.at)+'</span><span class="tag'+(x.k==='gold'?' z-phx':'')+'">'+esc(MKL[x.k]||x.k)+'</span><input class="in" data-b="mk:'+x.id+':note" value="'+esc(x.note)+'" placeholder="Note" aria-label="Marker note"><button class="xbtn" data-act="mkdel" data-id="'+x.id+'" aria-label="Delete marker">'+ic('x')+'</button></div>').join('')+'</div></div>';
+  }
+  h+='<div class="sh-foot"><button class="btn danger" data-act="ivdel" data-confirm="Tap again to delete">Delete</button><button class="btn" data-act="ivcopy">Copy summary</button><button class="btn pri" data-act="close">'+(m==='wrap'?'Save to log':'Done')+'</button></div>';
+  showSheet(h);
+}
+
+/* question + loadout editors */
+function renderQe(){
+  const st=stats()[qed.id]||{n:0,rs:0,rn:0};
+  showSheet(head('Edit question')+
+    '<div class="f"><label class="lbl" for="qe-t">Question</label><textarea id="qe-t" class="in" rows="3" data-b="qed:t">'+esc(qed.t)+'</textarea></div>'+
+    '<div class="f"><span class="lbl">Type</span><div class="chips wrapx">'+CATS.map(c=>'<button class="chip" data-act="qec" data-c="'+esc(c)+'" aria-pressed="'+(qed.c===c)+'">'+esc(c)+'</button>').join('')+'</div></div>'+
+    '<div class="f"><button class="chip" data-act="qes" aria-pressed="'+!!qed.s+'" style="justify-self:start">'+ic('star')+' Starred</button></div>'+
+    '<p class="mono dim" style="font-size:13px;margin-bottom:14px">'+(st.n?'Asked '+st.n+'×'+(st.rn?' · avg '+(st.rs/st.rn).toFixed(1)+'/3':''):'Not asked yet')+'</p>'+
+    '<div class="sh-foot"><button class="btn danger" data-act="qdel" data-confirm="Tap again to delete">Delete</button><button class="btn pri" data-act="qsave">Save</button></div>');
+}
+function renderLed(){
+  pkKey='led';
+  showSheet(head(led.id?'Edit loadout':'New loadout')+
+    '<div class="f"><label class="lbl" for="le-n">Name</label><input id="le-n" class="in" data-b="led:name" value="'+esc(led.name)+'" placeholder="Crowd pass, Long form, Closing round" autocomplete="off"></div>'+
+    '<div class="f"><div class="row" style="justify-content:space-between"><span class="lbl">Questions in order</span><span id="led-count" class="mono dim" style="font-size:12px">'+led.sel.length+' picked</span></div><p class="dim" style="font-size:13px">Tap in the order you want to ask them.</p>'+pickerHTML(led.sel)+'</div>'+
+    '<div class="sh-foot">'+(led.id?'<button class="btn danger" data-act="lodel" data-confirm="Tap again to delete">Delete</button>':'')+'<button class="btn pri" data-act="losave">Save loadout</button></div>');
+}
+
+/* export */
+function ivText(iv){
+  const c=iv.cons||{};
+  let t=ivName(iv)+(iv.desc?' — '+iv.desc:'')+'\n';
+  t+=(ZL[iv.z]||'Other')+' · '+fdt(iv.c)+(iv.t0&&iv.t1?' · '+tc((iv.t1-iv.t0)/1000)+' on camera':'')+(iv.clip?' · clip: '+iv.clip:'')+'\n';
+  if(iv.h)t+='Contact: '+iv.h+'\n';
+  t+='Consent: name on camera '+(c.n?'yes':'no')+' · OK to post '+(c.p?'yes':'no')+' · release '+(c.r?'yes':'no')+'\n';
+  if(iv.rate)t+='Rating: '+iv.rate+'/5\n';
+  if(iv.fu===1)t+='FOLLOW UP NEEDED\n';
+  if(iv.notes)t+='Notes: '+iv.notes+'\n';
+  const qs=(iv.items||[]).filter(x=>x.st==='asked');
+  if(qs.length){t+='\nQuestions\n';qs.forEach(x=>{t+='['+tc(x.at||0)+'] '+x.t+(x.r?' ('+RL[x.r]+')':'')+'\n'+(x.note?'    '+x.note+'\n':'')})}
+  if((iv.mk||[]).length){t+='\nMarkers\n';iv.mk.slice().sort((a,b)=>a.at-b.at).forEach(m=>{t+='['+tc(m.at)+'] '+(MKL[m.k]||m.k)+(m.note?' — '+m.note:'')+'\n'})}
+  return t;
+}
+function csvCell(v){let s=String(v==null?'':v);if(/^[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
+function csv(rows){return rows.map(r=>r.map(csvCell).join(',')).join('\n')}
+function ivCSV(){
+  const rows=[['date','time','where','name','contact','context','clip','seconds_on_camera','rating','name_on_camera','ok_to_post','release','follow_up','questions_asked','notes']];
+  doneIvs().sort((a,b)=>a.c-b.c).forEach(i=>{const c=i.cons||{};rows.push([dk(i.c),ftime(i.c),ZL[i.z]||'',i.who,i.h,i.desc,i.clip,i.t0&&i.t1?Math.round((i.t1-i.t0)/1000):'',i.rate||'',c.n?'yes':'no',c.p?'yes':'no',c.r?'yes':'no',i.fu===1?'open':i.fu===2?'done':'',(i.items||[]).filter(x=>x.st==='asked').length,i.notes])});
+  return csv(rows);
+}
+function mkCSV(){
+  const rows=[['name','clip','timecode','kind','note','date']];
+  doneIvs().sort((a,b)=>a.c-b.c).forEach(i=>(i.mk||[]).slice().sort((a,b)=>a.at-b.at).forEach(m=>rows.push([ivName(i),i.clip,tc(m.at),MKL[m.k]||m.k,m.note,dk(i.c)])));
+  return csv(rows);
+}
+function renderExp(){
+  const n=doneIvs().length,today=doneIvs().filter(i=>dk(i.c)===dk(Date.now())).length;
+  let h=head('Export')+'<p class="dim" style="margin-bottom:14px">Your log is saved automatically. These make a second copy you can keep or hand to an editor.</p><div style="display:grid;gap:10px">';
+  h+='<button class="btn" data-act="cptoday"'+(today?'':' disabled')+'>Copy today as text <span class="mono dim">'+today+'</span></button>';
+  h+='<button class="btn" data-act="cpall"'+(n?'':' disabled')+'>Copy everything as text <span class="mono dim">'+n+'</span></button>';
+  if(DL){
+    h+='<button class="btn" data-act="dlcsv"'+(n?' ':' disabled')+'>Download interviews (CSV)</button>';
+    h+='<button class="btn" data-act="dlmk"'+(n?' ':' disabled')+'>Download markers for editing (CSV)</button>';
+    h+='<button class="btn" data-act="dlbak">Download full backup (JSON)</button>';
+  }else h+='<p class="dim" style="font-size:13px">File downloads are not available in this view. Copying as text still works.</p>';
+  h+='<label class="btn" style="cursor:pointer">Restore from a backup file<input id="restore" type="file" accept="application/json,.json" hidden></label></div>';
+  showSheet(h);
+}
+async function dl(name,data){
+  if(!DL)return;
+  try{await DL.save({filename:name,data:data});toast('Saved')}
+  catch(e){if(!e||e.code!=='declined')toast('Could not save that file here. Try Copy instead.')}
+}
+async function copyText(txt,label){
+  try{await navigator.clipboard.writeText(txt);toast(label||'Copied');return}catch(e){}
+  showSheet(head('Copy')+'<p class="dim" style="margin-bottom:10px">Copying was blocked here. Select all and copy.</p><textarea id="cp" class="in" rows="10" readonly>'+esc(txt)+'</textarea>');
+  setTimeout(()=>{const t=q$('#cp');if(t){t.focus();t.select()}},60);
+}
+function restore(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const o=JSON.parse(r.result);
+      if(!o||o.app!=='mic-check'||!o.main)throw new Error('bad');
+      let k=0;
+      if((o.main.u||0)>(S.main.u||0)){S.main=Object.assign({q:[],lo:[],spots:[],pre:[],wrap:[],goal:10,u:0},o.main);S.sync.dirtyMain=true}
+      Object.keys(o.iv||{}).forEach(id=>{const r2=o.iv[id],l=S.iv[id];if(!l||(r2.u||0)>(l.u||0)){S.iv[id]=r2;S.sync.dirty[id]=1;k++}});
+      persist();queueFlush();closeSheet();toast('Restored '+k+' interview'+(k===1?'':'s'));
+    }catch(e){toast('That file is not a Mic Check backup.')}
+  };
+  r.readAsText(file);
+}
+
+/* ---------- on air ---------- */
+let airId=null,airT=0,lastMk=null,wl=null,qOpen=false;
+const curAir=()=>S.iv[airId];
+function elapsed(iv){return (Date.now()-iv.t0)/1000}
+function wake(){try{if('wakeLock' in navigator&&!wl){navigator.wakeLock.request('screen').then(l=>{wl=l;l.addEventListener('release',()=>{wl=null})}).catch(()=>{wl=null})}}catch(e){wl=null}}
+function unwake(){try{wl&&wl.release()}catch(e){}wl=null}
+function openAir(id){
+  airId=id;lastMk=null;qOpen=false;
+  document.documentElement.classList.add('lock');
+  q$('#air').hidden=false;airRender();
+  clearInterval(airT);airT=setInterval(()=>{const iv=curAir(),el=q$('#tc'),h=q$('#hudtc');if(iv&&el)el.textContent=tc(elapsed(iv));if(iv&&h)h.textContent=tc(elapsed(iv))},250);
+  wake();
+}
+function closeAir(){
+  clearInterval(airT);airId=null;
+  if(hud)hudClose();
+  const A=q$('#air');A.hidden=true;A.innerHTML='';unwake();
+  if(!shOpen)document.documentElement.classList.remove('lock');
+  render();
+}
+function nextTodo(iv,from){
+  const n=iv.items.length;
+  for(let i=from+1;i<n;i++)if(iv.items[i].st==='todo')return i;
+  for(let i=0;i<=from&&i<n;i++)if(iv.items[i].st==='todo')return i;
+  return n;
+}
+function markAsked(iv,it){if(it.st!=='asked'){it.st='asked';it.at=Math.floor(elapsed(iv))}}
+function airRender(){
+  const iv=curAir(),A=q$('#air');
+  if(!iv||!iv.live){closeAir();return}
+  const items=iv.items,n=items.length,it=items[iv.idx];
+  const left=items.filter(x=>x.st==='todo').length;
+  const segs=items.map((x,i)=>'<button class="seg '+x.st+(i===iv.idx?' cur':'')+'" data-act="jump" data-i="'+i+'" aria-label="Question '+(i+1)+', '+(x.st==='todo'?'not asked':x.st==='asked'?'asked':'skipped')+'"><i></i></button>').join('');
+  let card;
+  if(it){
+    card='<div class="qcard"><div class="qc-top"><span class="tag">'+esc(it.c||'Ad-lib')+'</span><span class="mono dim">'+(iv.idx+1)+' of '+n+'</span>'+(it.st==='asked'?'<span class="mono ok">asked at '+tc(it.at||0)+'</span>':it.st==='skip'?'<span class="mono dim">skipped</span>':'')+'</div><p class="qtext">'+esc(it.t)+'</p></div>'+
+      '<div class="r3" role="group" aria-label="How was the answer">'+[1,2,3].map(r=>'<button class="rt" data-act="rate" data-r="'+r+'" aria-pressed="'+(it.r===r)+'">'+RL[r]+'</button>').join('')+'</div>'+
+      '<textarea id="itnote" class="in" rows="2" data-b="it:'+it.k+':note" placeholder="Quote or note for this answer">'+esc(it.note)+'</textarea>';
+  }else if(n){
+    card='<div class="qcard end"><p class="qtext">That’s the list</p><p class="dim">Everything is asked or skipped. Add an ad-lib below, jump back to a skipped one, or wrap up.</p></div>';
+  }else{
+    card='<div class="qcard end"><p class="qtext">Open conversation</p><p class="dim">No questions queued. Drop markers, take notes, or add ad-lib questions below.</p></div>';
+  }
+  const lm=lastMk&&iv.mk.find(m=>m.id===lastMk);
+  const queue='<div class="qpanel"><button class="btn sm" data-act="qtog" aria-expanded="'+qOpen+'" style="justify-self:start">Queue · '+left+' left</button>'+
+    (qOpen?'<div class="list">'+(n?items.map((x,i)=>'<button class="qr '+x.st+(i===iv.idx?' cur':'')+'" data-act="jump" data-i="'+i+'"><span class="n mono">'+(i+1)+'</span><span class="tx">'+esc(x.t)+'</span><span class="st">'+(x.st==='todo'?'':x.st==='asked'?'asked':'skipped')+'</span></button>').join(''):'<div class="empty"><span>Nothing queued.</span></div>')+'</div>':'')+
+    '<form class="row" data-form="adlib"><input id="adlib" class="in" placeholder="Ad-lib question to ask next" aria-label="Ad-lib question" autocomplete="off"><button class="btn" type="submit">Add</button></form></div>';
+  const canResync=!iv.mk.length&&!items.some(x=>x.st==='asked');
+  A.innerHTML='<div class="air-in"><div class="air-top"><div class="rect"><span class="recdot"></span><span class="eyebrow" style="color:inherit">Rolling</span></div><div id="tc" class="tcbig mono" aria-label="Clock">'+tc(elapsed(iv))+'</div><button class="btn sm" data-act="end" data-confirm="Tap again to end">Wrap up</button></div>'+
+    '<div class="air-sub"><span>'+esc(ivName(iv))+' · '+esc(ZL[iv.z]||'')+'</span>'+'<div style="display:flex;align-items:center;gap:12px;flex:none"><button class="btn sm" data-act="hud" data-live="1">Prompter</button>'+(canResync?'<button class="link" data-act="resync" data-confirm="Tap again to restart">Restart clock</button>':'')+'</div></div>'+
+    (n?'<div class="segs">'+segs+'</div>':'')+
+    '<div class="air-scroll">'+card+queue+'</div>'+
+    '<div class="air-foot">'+
+    (lm?'<input id="mknote" class="in" style="min-height:42px;font-size:15px" data-b="mk:'+lm.id+':note" value="'+esc(lm.note)+'" placeholder="Note for '+esc(MKL[lm.k])+' at '+tc(lm.at)+'" aria-label="Marker note">':'')+
+    '<div class="mkg">'+MK.map(x=>'<button class="mk '+(x[0]==='gold'?'gold':'')+'" data-act="mark" data-k="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
+    '<div class="act3"><button class="btn sm" data-act="back"'+(iv.idx<=0?' disabled':'')+'>Back</button><button class="btn sm" data-act="later"'+(it&&it.st==='todo'&&n>1?'':' disabled')+'>Later</button><button class="btn sm" data-act="skip"'+(it?'':' disabled')+'>Skip</button></div>'+
+    '<button class="btn pri big" data-act="asked"'+(it?'':' disabled')+'>'+(it&&it.st==='asked'?'Next':'Asked · next')+'</button></div></div>';
+}
+/* ---------- prompter HUD ---------- */
+const TIPS={
+  'Warm-up':'Great warm-up question for groups or energetic attendees.',
+  'Story':'Let them run. Don’t cut in. Ask “and then what happened?”',
+  'Issue':'Ask for the why behind the answer, not just the position.',
+  'Hot take':'Keep it punchy. Ask them to say it in one sentence.',
+  'Follow-up':'Echo their own words back to dig one level deeper.',
+  'Closer':'Confirm the name spelling and get OK to post.',
+  'Ad-lib':'Ad-lib. Follow the thread they just gave you.'
+};
+let hud=null,hudFs=1;
+try{const v=parseFloat(localStorage.getItem('micCheck.hudfs'));if(v>=.6&&v<=1.8)hudFs=v}catch(e){}
+function hudData(){
+  if(!hud)return null;
+  if(hud.live){
+    const iv=curAir();if(!iv)return null;
+    return {it:iv.items[iv.idx]||null,i:iv.idx,n:iv.items.length,z:ZL[iv.z]||'',iv:iv};
+  }
+  const q=S.main.q.find(x=>x.id===hud.ids[hud.i]);
+  return {it:q?{t:q.t,c:q.c}:null,i:hud.i,n:hud.ids.length,z:'',iv:null};
+}
+function hudRender(){
+  const H=q$('#hud'),d=hudData();
+  if(!d){hudClose();return}
+  const it=d.it,end=!it;
+  const atEnd=hud.live?d.i>=d.n:d.i>=d.n-1;
+  const chev=(p)=>'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+p+'"/></svg>';
+  let mid;
+  if(it){
+    mid='<div class="hud-tags"><span class="hud-tag">'+esc(it.c||'Ad-lib')+'</span>'+(d.z?'<span class="hud-tag">'+esc(d.z)+'</span>':'')+'</div>'+
+      '<p class="hud-q" style="--hfs:'+hudFs+'">'+esc(it.t)+'</p>'+
+      '<p class="hud-tip">Pro Tip: '+esc(TIPS[it.c]||TIPS['Ad-lib'])+'</p>';
+  }else{
+    mid='<p class="hud-q" style="--hfs:'+hudFs+'">'+(d.n?'That’s the list':'No questions queued')+'</p><p class="hud-tip">'+(d.n?'Everything is asked or skipped. Close the prompter to wrap up or add an ad-lib.':'Close the prompter and add ad-lib questions, or start from a loadout.')+'</p>';
+  }
+  H.innerHTML='<div class="hud-in"><div class="hud-top"><div class="hud-mode"><span class="recdot"></span>Prompter HUD mode'+(d.iv?'<span id="hudtc" class="hud-tc">'+tc(elapsed(d.iv))+'</span>':'')+'</div>'+
+    '<div class="hud-ctl"><button class="hud-b" data-act="hudfs" data-d="-1" aria-label="Smaller text">-A</button><button class="hud-b" data-act="hudfs" data-d="1" aria-label="Larger text">+A</button><button class="hud-b" data-act="hudclose">Close [ESC]</button></div></div>'+
+    '<div class="hud-mid">'+mid+'</div>'+
+    '<div class="hud-foot"><button class="hud-nav" data-act="hudprev"'+(d.i<=0?' disabled':'')+'>'+chev('M15 5l-7 7 7 7')+'Previous</button><span class="hud-ct">'+Math.min(d.i+1,d.n)+' / '+d.n+'</span><button class="hud-nav nx" data-act="hudnext"'+(atEnd||end?' disabled':'')+'>Next Prompt'+chev('M9 5l7 7-7 7')+'</button></div></div>';
+}
+function hudOpen(live){
+  if(live){if(!curAir())return;hud={live:true}}
+  else{
+    let ids=S.main.q.filter(q=>q.s).map(q=>q.id);
+    if(!ids.length)ids=S.main.q.map(q=>q.id);
+    if(!ids.length){toast('Add some questions first.');return}
+    hud={live:false,ids:ids,i:0};
+  }
+  q$('#hud').hidden=false;document.documentElement.classList.add('lock');
+  hudRender();wake();
+}
+function hudClose(){
+  hud=null;const H=q$('#hud');H.hidden=true;H.innerHTML='';
+  if(!airId)unwake();
+  if(!airId&&!shOpen)document.documentElement.classList.remove('lock');
+}
+function hudStep(dir){
+  if(!hud)return;
+  if(hud.live){
+    const iv=curAir();if(!iv)return;
+    if(dir>0){
+      const it=iv.items[iv.idx];
+      if(it){markAsked(iv,it);iv.idx=nextTodo(iv,iv.idx)}
+    }else iv.idx=Math.max(0,iv.idx-1);
+    touchIv(iv);airRender();
+  }else{
+    hud.i=Math.max(0,Math.min(hud.ids.length-1,hud.i+dir));
+  }
+  hudRender();
+}
+function endIv(){
+  const iv=curAir();if(!iv)return;
+  iv.live=false;iv.t1=Date.now();touchIv(iv);
+  const id=iv.id;closeAir();openIv(id,'wrap');
+}
+
+/* ---------- actions ---------- */
+function arm(b){
+  b.dataset.orig=b.innerHTML;b.textContent=b.dataset.confirm;b.classList.add('armed');
+  clearTimeout(b._t);b._t=setTimeout(()=>{if(b.isConnected){b.innerHTML=b.dataset.orig;b.classList.remove('armed')}},3500);
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');
+  if(!b||b.disabled)return;
+  if(b.dataset.confirm&&!b.classList.contains('armed')){arm(b);return}
+  act(b.dataset.act,b);
+});
+function act(a,b){
+  const d=b.dataset;
+  let iv,it;
+  switch(a){
+    case 'tab':S.ui.tab=d.v;render();window.scrollTo(0,0);break;
+    case 'syncnow':if(DB){toast(S.sync.state==='ok'?'Everything is synced':'Syncing now…');flush()}else toast('Saved on this phone. Sync is not available here.');break;
+    case 'close':closeSheet();break;
+    case 'prep':{const lv=ivs().find(i=>i.live);if(lv)openAir(lv.id);else openPrep(d.lo)}break;
+    case 'quick':quickLog();break;
+    case 'roll':roll();break;
+    case 'tolog':S.ui.tab='log';S.ui.lfu=true;render();window.scrollTo(0,0);break;
+    case 'fudone':iv=S.iv[d.id];if(iv){iv.fu=2;touchIv(iv);render()}break;
+    case 'exp':renderExp();break;
+    case 'cptoday':copyText(doneIvs().filter(i=>dk(i.c)===dk(Date.now())).sort((x,y)=>x.c-y.c).map(ivText).join('\n----\n\n'),'Copied today');break;
+    case 'cpall':copyText(doneIvs().sort((x,y)=>x.c-y.c).map(ivText).join('\n----\n\n'),'Copied everything');break;
+    case 'dlcsv':dl('mic-check-interviews-'+dk(Date.now())+'.csv',ivCSV());break;
+    case 'dlmk':dl('mic-check-markers-'+dk(Date.now())+'.csv',mkCSV());break;
+    case 'dlbak':dl('mic-check-backup-'+dk(Date.now())+'.json',JSON.stringify({app:'mic-check',v:1,exported:Date.now(),main:S.main,iv:S.iv}));break;
+    /* questions */
+    case 'qview':S.ui.qview=d.v;render();break;
+    case 'qcat':S.ui.qcat=d.c;render();break;
+    case 'qstarf':S.ui.qstar=!S.ui.qstar;render();break;
+    case 'qstarq':mm(()=>{const q=S.main.q.find(x=>x.id===d.id);if(q)q.s=q.s?0:1});render();break;
+    case 'qedit':{const q=S.main.q.find(x=>x.id===d.id);if(q){qed={id:q.id,t:q.t,c:q.c,s:q.s?1:0};renderQe()}}break;
+    case 'qec':qed.c=d.c;renderQe();break;
+    case 'qes':qed.s=qed.s?0:1;renderQe();break;
+    case 'qsave':{
+      const t=qed.t.trim();if(!t){toast('A question needs some words.');break}
+      if(mm(()=>{const q=S.main.q.find(x=>x.id===qed.id);if(q){q.t=t;q.c=qed.c;q.s=qed.s}}))closeSheet();
+    }break;
+    case 'qdel':if(mm(()=>{S.main.q=S.main.q.filter(x=>x.id!==qed.id);S.main.lo.forEach(l=>{l.qids=l.qids.filter(id=>id!==qed.id)})}))closeSheet();break;
+    case 'lonew':led={id:null,name:'',sel:[]};renderLed();break;
+    case 'loedit':{const l=S.main.lo.find(x=>x.id===d.id);if(l){led={id:l.id,name:l.name,sel:l.qids.filter(id=>S.main.q.some(q=>q.id===id))};renderLed()}}break;
+    case 'losave':{
+      const nm=led.name.trim();if(!nm){toast('Give the loadout a name.');break}
+      if(mm(()=>{if(led.id){const l=S.main.lo.find(x=>x.id===led.id);if(l){l.name=nm;l.qids=led.sel.slice()}}else S.main.lo.push({id:uid('l'),name:nm,qids:led.sel.slice()})}))closeSheet();
+    }break;
+    case 'lodel':if(mm(()=>{S.main.lo=S.main.lo.filter(x=>x.id!==led.id)}))closeSheet();break;
+    case 'pk':{const s=curSel(),i=s.indexOf(d.id);if(i>=0)s.splice(i,1);else s.push(d.id);refreshPick()}break;
+    case 'psrc':prep.src=d.s;renderPrep();break;
+    case 'pz':prep.z=d.z;renderPrep();break;
+    /* interview sheet */
+    case 'ivopen':openIv(d.id,'edit');break;
+    case 'iz':iv=S.iv[ivSh.id];iv.z=d.z;S.ui.lastZ=d.z;touchIv(iv);renderIv();break;
+    case 'ic':iv=S.iv[ivSh.id];iv.cons=iv.cons||{n:0,p:0,r:0};iv.cons[d.k]=iv.cons[d.k]?0:1;touchIv(iv);renderIv();break;
+    case 'irate':iv=S.iv[ivSh.id];iv.rate=iv.rate===+d.r?0:+d.r;touchIv(iv);renderIv();break;
+    case 'ifu':iv=S.iv[ivSh.id];iv.fu=iv.fu===1?0:1;touchIv(iv);renderIv();break;
+    case 'itr':iv=S.iv[ivSh.id];it=iv.items.find(x=>x.k===d.id);if(it){it.r=it.r===+d.r?0:+d.r;touchIv(iv);renderIv()}break;
+    case 'mkdel':iv=S.iv[ivSh.id];iv.mk=iv.mk.filter(m=>m.id!==d.id);touchIv(iv);renderIv();break;
+    case 'tobank':iv=S.iv[ivSh.id];it=iv.items.find(x=>x.k===d.id);
+      if(it&&mm(()=>{const id=uid('q');S.main.q.push({id:id,t:it.t,c:'Follow-up',s:0});it.qid=id;touchIv(iv)})){toast('Saved to your bank');renderIv()}break;
+    case 'ivdel':iv=S.iv[ivSh.id];iv.del=1;iv.live=false;touchIv(iv);ivSh=null;closeSheet();toast('Deleted');break;
+    case 'ivcopy':iv=S.iv[ivSh.id];copyText(ivText(iv),'Summary copied');break;
+    /* log filters */
+    case 'lzone':S.ui.lz=d.z;render();break;
+    case 'lfu':S.ui.lfu=!S.ui.lfu;render();break;
+    /* plan */
+    case 'goal':mm(()=>{S.main.goal=Math.max(0,Math.min(99,(S.main.goal||0)+(+d.d)))});render();break;
+    case 'ck':mm(()=>{const x=S.main[d.k].find(y=>y.id===d.id);if(x)x.d=x.d?0:1});render();break;
+    case 'ckdel':mm(()=>{S.main[d.k]=S.main[d.k].filter(y=>y.id!==d.id)});render();break;
+    case 'ckreset':mm(()=>{S.main[d.k].forEach(y=>{y.d=0})});render();break;
+    /* on air */
+    case 'asked':iv=curAir();it=iv.items[iv.idx];if(it){markAsked(iv,it);iv.idx=nextTodo(iv,iv.idx);touchIv(iv);airRender();q$('.air-scroll').scrollTop=0}break;
+    case 'skip':iv=curAir();it=iv.items[iv.idx];if(it){if(it.st==='todo')it.st='skip';iv.idx=nextTodo(iv,iv.idx);touchIv(iv);airRender()}break;
+    case 'later':iv=curAir();it=iv.items[iv.idx];if(it&&it.st==='todo'&&iv.items.length>1){iv.items.splice(iv.idx,1);iv.items.push(it);touchIv(iv);airRender()}break;
+    case 'back':iv=curAir();iv.idx=Math.max(0,iv.idx-1);touchIv(iv);airRender();break;
+    case 'jump':iv=curAir();iv.idx=+d.i;touchIv(iv);airRender();q$('.air-scroll').scrollTop=0;break;
+    case 'rate':iv=curAir();it=iv.items[iv.idx];if(it){markAsked(iv,it);it.r=it.r===+d.r?0:+d.r;touchIv(iv);airRender()}break;
+    case 'mark':{
+      iv=curAir();const at=Math.floor(elapsed(iv));
+      const m={id:uid('m'),at:at,k:d.k,note:''};iv.mk.push(m);lastMk=m.id;touchIv(iv);buzz();
+      toast((MKL[d.k]||'Marker')+' at '+tc(at));airRender();
+    }break;
+    case 'qtog':qOpen=!qOpen;airRender();break;
+    case 'resync':iv=curAir();iv.t0=Date.now();iv.c=iv.t0;touchIv(iv);airRender();toast('Clock restarted at 00:00');break;
+    case 'end':endIv();break;
+    case 'hud':hudOpen(d.live==='1');break;
+    case 'hudclose':hudClose();break;
+    case 'hudnext':hudStep(1);break;
+    case 'hudprev':hudStep(-1);break;
+    case 'hudfs':hudFs=Math.max(.6,Math.min(1.8,Math.round((hudFs+(+d.d)*.15)*100)/100));try{localStorage.setItem('micCheck.hudfs',String(hudFs))}catch(e){}hudRender();break;
+  }
+}
+document.addEventListener('submit',e=>{
+  const f=e.target.closest('[data-form]');if(!f)return;
+  e.preventDefault();
+  const kind=f.dataset.form;
+  if(kind==='qadd'){
+    const ta=q$('#qnew'),cat=q$('#qcat').value;
+    const lines=ta.value.split(/\n+/).map(s=>s.replace(/^\s*(?:[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean);
+    if(!lines.length){toast('Type or paste a question first.');return}
+    if(mm(()=>{lines.forEach(t=>S.main.q.push({id:uid('q'),t:t,c:cat,s:0}))})){render();toast(lines.length===1?'Question added':lines.length+' questions added')}
+  }else if(kind==='ckadd'){
+    const k=f.dataset.k,inp=q$('#ck-'+k),t=inp.value.trim();if(!t)return;
+    if(mm(()=>{S.main[k].push({id:uid('c'),t:t,d:0})}))render();
+  }else if(kind==='spotadd'){
+    const t=q$('#sp-t').value.trim(),z=q$('#sp-z').value;if(!t)return;
+    if(mm(()=>{S.main.spots.push({id:uid('s'),t:t,z:z,d:0})})){S.ui.lastZ=z;render()}
+  }else if(kind==='adlib'){
+    const iv=curAir(),inp=q$('#adlib'),t=inp.value.trim();if(!iv||!t)return;
+    const cur=iv.items[iv.idx];
+    const at=cur?iv.idx+1:iv.items.length;
+    iv.items.splice(at,0,{k:uid('k'),qid:null,t:t,c:'Ad-lib',st:'todo',at:null,r:0,note:''});
+    iv.idx=at;touchIv(iv);airRender();q$('.air-scroll').scrollTop=0;
+  }
+});
+function bind(k,v){
+  const p=k.split(':');
+  if(p[0]==='prep'){if(prep)prep[p[1]]=v;return}
+  if(p[0]==='led'){if(led)led[p[1]]=v;return}
+  if(p[0]==='qed'){if(qed)qed[p[1]]=v;return}
+  const id=(ivSh&&shOpen)?ivSh.id:airId,iv=S.iv[id];if(!iv)return;
+  if(p[0]==='iv'){iv[p[1]]=v;touchIv(iv)}
+  else if(p[0]==='it'){const it=iv.items.find(x=>x.k===p[1]);if(it){it.note=v;touchIv(iv)}}
+  else if(p[0]==='mk'){const m=iv.mk.find(x=>x.id===p[1]);if(m){m.note=v;touchIv(iv)}}
+}
+document.addEventListener('input',e=>{
+  const t=e.target,b=t.dataset&&t.dataset.b;
+  if(b){bind(b,t.value);return}
+  if(t.id==='qsearch'){S.ui.qs=t.value;const l=q$('#qlist');if(l)l.innerHTML=qListHTML()}
+  else if(t.id==='lsearch'){S.ui.ls=t.value;const l=q$('#llist');if(l)l.innerHTML=logListHTML()}
+  else if(t.id==='pk-s')refreshPick();
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='restore'&&e.target.files&&e.target.files[0])restore(e.target.files[0]);
+});
+document.addEventListener('keydown',e=>{
+  if(hud){
+    if(e.key==='Escape'){hudClose();e.preventDefault()}
+    else if(['ArrowRight','ArrowDown','PageDown',' '].indexOf(e.key)>=0){hudStep(1);e.preventDefault()}
+    else if(['ArrowLeft','ArrowUp','PageUp'].indexOf(e.key)>=0){hudStep(-1);e.preventDefault()}
+    return;
+  }
+  if(e.key==='Escape'&&shOpen)closeSheet();
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){if(airId)wake()}
+  else{saveLocal();flush()}
+});
+window.addEventListener('pagehide',saveLocal);
+
+/* ---------- boot ---------- */
+render();
+(function(){
+  const lv=ivs().find(i=>i.live);
+  if(lv&&Date.now()-lv.t0<3*3600e3)openAir(lv.id);
+})();
+initDb();
+})();
+</script>
+
+</body></html>
